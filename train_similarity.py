@@ -354,8 +354,8 @@ if __name__ == "__main__":
     parser.add_argument("--lambda_lap", type=float, default=0.0)
     parser.add_argument("--n_clusters", type=int, default=5)
     parser.add_argument("--inv_affinity_matrix", action='store_true', default=False)
-    parser.add_argument("--similarity_grouping", action='store_true', default=False,
-                        help="Use similarity-based dynamic grouping during densification stage")
+    parser.add_argument("--similarity_grouping", action='store_true', default=True,
+                        help="Use similarity-based dynamic grouping during densification stage (enabled by default)")
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     

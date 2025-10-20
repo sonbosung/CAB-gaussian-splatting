@@ -8,12 +8,29 @@ import shutil
 from utils.colmap_utils import *
 from utils.bundle_utils import cluster_cameras
 from utils.aug_utils import *
+from utils.scheduler_utils import ImageClustering
 
 
-def augment(colmap_path, image_path, augment_path, camera_order, visibility_aware_culling, compare_center_patch, n_clusters):
+def augment(colmap_path, image_path, augment_path, camera_order, visibility_aware_culling, compare_center_patch, n_clusters, use_similarity_grouping=False, closest_n_views=12):
     colmap_images, colmap_points3D, colmap_cameras = get_colmap_data(colmap_path)
     np.seterr(divide='ignore', invalid='ignore')
     sorted_keys = cluster_cameras(colmap_path, camera_order, n_clusters=n_clusters)
+    
+    # Setup similarity-based view matching if enabled
+    if use_similarity_grouping:
+        image_clustering = ImageClustering(dataset_path=colmap_path, n_clusters=n_clusters)
+        # Build closest_n_views dictionary: image_id -> list of closest image_ids
+        name_to_id = {colmap_images[key].name: key for key in sorted_keys}
+        closest_views_dict = {}
+        for view_id in sorted_keys:
+            view_name = colmap_images[view_id].name
+            similarities = [(name, sim) for name, sim in image_clustering.W_dict[view_name].items()]
+            similarities = [s for s in similarities if s[0] != view_name]
+            sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=True)
+            closest_names = [name for name, _ in sorted_similarities[:closest_n_views]]
+            closest_views_dict[view_id] = [name_to_id[name] for name in closest_names]
+    else:
+        closest_views_dict = None
 
     points3d = []
     points3d_rgb = []
@@ -50,22 +67,25 @@ def augment(colmap_path, image_path, augment_path, camera_order, visibility_awar
         roots[view] = view_root
 
     for view1_idx in tqdm(range(len(sorted_keys))):
-        for view2_idx in [view1_idx + 6,
-                          view1_idx + 5,
-                          view1_idx + 4,
-                          view1_idx + 3,
-                          view1_idx + 2,
-                          view1_idx + 1,
-                          view1_idx - 1,
-                          view1_idx - 2,
-                          view1_idx - 3,
-                          view1_idx - 4,
-                          view1_idx - 5,
-                          view1_idx - 6]:
-            if view2_idx > len(sorted_keys) - 1:
-                view2_idx = view2_idx - len(sorted_keys)
-            view1 = sorted_keys[view1_idx]
-            view2 = sorted_keys[view2_idx]
+        view1 = sorted_keys[view1_idx]
+        
+        # Select reference views based on similarity or sequential neighbors
+        if use_similarity_grouping and closest_views_dict:
+            # Use similarity-based closest views
+            ref_views = closest_views_dict[view1]
+        else:
+            # Use sequential neighbors (original behavior)
+            ref_view_offsets = [6, 5, 4, 3, 2, 1, -1, -2, -3, -4, -5, -6]
+            ref_views = []
+            for offset in ref_view_offsets:
+                view2_idx = view1_idx + offset
+                if view2_idx > len(sorted_keys) - 1:
+                    view2_idx = view2_idx - len(sorted_keys)
+                elif view2_idx < 0:
+                    view2_idx = len(sorted_keys) + view2_idx
+                ref_views.append(sorted_keys[view2_idx])
+        
+        for view2 in ref_views:
             view1_root = roots[view1]
             view2_root = roots[view2]
 
@@ -222,6 +242,12 @@ if __name__ == "__main__":
                    action="store_true",
                    default=False)
     parser.add_argument("--n_clusters", type=int, default=10)
+    parser.add_argument("--use_similarity_grouping",
+                   action="store_true",
+                   default=False,
+                   help="Use similarity-based view matching instead of sequential neighbors")
+    parser.add_argument("--closest_n_views", type=int, default=12,
+                   help="Number of closest views to use for similarity-based matching")
     args = parser.parse_args()
     print("args.colmap_path", args.colmap_path)
     print("args.image_path", args.image_path)
@@ -230,4 +256,8 @@ if __name__ == "__main__":
     print("args.visibility_aware_culling", args.visibility_aware_culling)
     print("args.compare_center_patch", args.compare_center_patch)
     print("args.n_clusters", args.n_clusters)
-    augment(args.colmap_path, args.image_path, args.augment_path, args.camera_order, args.visibility_aware_culling, args.compare_center_patch, args.n_clusters)
+    print("args.use_similarity_grouping", args.use_similarity_grouping)
+    print("args.closest_n_views", args.closest_n_views)
+    augment(args.colmap_path, args.image_path, args.augment_path, args.camera_order, 
+            args.visibility_aware_culling, args.compare_center_patch, args.n_clusters,
+            args.use_similarity_grouping, args.closest_n_views)
