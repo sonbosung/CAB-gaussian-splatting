@@ -35,9 +35,12 @@ closest_n_views=12  # Number of most similar views to use in augmentation
 # export DATA_ROOT="/path/to/your/data"
 # export OUTPUT_ROOT="/path/to/your/output"
 colmap_path="${DATA_ROOT:-./data}/mipnerf360"
+colmap_path="/mnt/disk2/360"
 exp_path="${OUTPUT_ROOT:-./experiments}"
+exp_path="/mnt/disk2/auggs/CAB-gaussian-splatting/experiments"
 exp_name="360_similarity_full"
 augmented_path="${OUTPUT_ROOT:-./output}/augmented_similarity"
+augmented_path="/mnt/disk2/360_similarity"
 
 # Create augmented path if it doesn't exist
 mkdir -p "${augmented_path}"
