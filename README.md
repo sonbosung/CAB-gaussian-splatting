@@ -107,7 +107,7 @@ The training scheduler:
 3. Progressively trains on camera groups during densification
 4. Applies adaptive densification and pruning per group
 
-See [TRAINING.md](docs/TRAINING.md) for detailed parameter descriptions.
+See [docs/TRAINING.md](docs/TRAINING.md) for detailed parameter descriptions.
 
 ## Citation
 
