@@ -8,20 +8,18 @@ This repository introduces a novel approach to enhance 3D Gaussian Splatting thr
 
 1. **SfM Point Augmentation**: A quadtree-based point augmentation strategy that densifies sparse SfM point clouds by leveraging multi-view geometric consistency and scene co-visibility information.
 
-2. **Co-visibility-based Image Batching**: An adaptive training scheduler that groups and processes images based on their co-visibility relationships, enabling more effective optimization of Gaussian primitives.
+2. **Similarity-based Image Grouping (from co-visibility adjacency)**: An adaptive scheduler that clusters cameras using similarity computed from the adjacency matrix of co-visible points, enabling more effective optimization of Gaussian primitives.
 
 ## Key Improvements
 
 - **Enhanced Point Cloud Initialization**: Augments sparse SfM reconstructions with geometrically consistent points in under-reconstructed regions
-- **Co-visibility-aware Training**: Groups cameras by scene co-visibility to improve convergence and representation quality
+- **Similarity-aware Training**: Groups cameras using similarity from co-visibility adjacency to improve convergence and representation quality
 - **Partial Scheduler**: Adaptive training schedule that optimizes different scene regions progressively
 - **Additional Loss Terms**: Depth smoothness and Laplacian pyramid losses for improved geometric consistency
 
 ## Results
 
-Our method achieves improved reconstruction quality, particularly in challenging regions with sparse initial point clouds:
-
-![Comparison Results](assets/360_covis_aug_partialscheduler_full_results.png)
+Our default results use similarity-based camera grouping computed from the co-visibility adjacency matrix.
 
 ### Similarity-based Training Results
 
@@ -81,8 +79,8 @@ python augment.py \
     --compare_center_patch \
     --n_clusters 4
 
-# Step 2: Train with co-visibility-based batching
-python train_partialscheduler.py \
+# Step 2: Train with similarity-based grouping (adjacency)
+python train_similarity.py \
     -s <path_to_augmented_data> \
     -m <output_model_path> \
     --eval \
@@ -105,7 +103,7 @@ python metrics.py -m <output_model_path>
 For reproducing results on Mip-NeRF 360 dataset:
 
 ```bash
-bash eval_covis_augment_partialscheduler.sh
+bash eval_similarity.sh
 ```
 
 Edit the script to set your dataset and output paths.
@@ -119,12 +117,12 @@ The augmentation process uses quadtree decomposition to identify under-reconstru
 - Geometric consistency verification across co-visible views
 - Local texture comparison for filtering occluded points
 
-### Co-visibility-based Training
+### Similarity-based Camera Grouping
 
 The training scheduler:
-1. Builds a co-visibility graph from SfM reconstruction
-2. Clusters cameras into groups based on shared visibility
-3. Progressively trains on camera groups during densification
+1. Builds a co-visibility adjacency matrix from SfM reconstruction
+2. Computes camera similarity from the adjacency and clusters cameras
+3. Progressively trains on similarity groups during densification
 4. Applies adaptive densification and pruning per group
 
 See [docs/TRAINING.md](docs/TRAINING.md) for detailed parameter descriptions.
@@ -162,7 +160,7 @@ This work builds upon the excellent [3D Gaussian Splatting](https://github.com/g
 
 Our modifications focus on:
 - SfM point augmentation strategy
-- Co-visibility-based camera grouping and training scheduling
+- Similarity-based camera grouping and training scheduling
 - Additional geometric consistency losses
 
 ## License
