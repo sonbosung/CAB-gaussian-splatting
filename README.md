@@ -23,6 +23,26 @@ Our method achieves improved reconstruction quality, particularly in challenging
 
 ![Comparison Results](assets/360_covis_aug_partialscheduler_full_results.png)
 
+### Similarity-based Training Results
+
+Results on Mip-NeRF 360 dataset using similarity-based camera grouping:
+
+| Scene | PSNR ↑ | SSIM ↑ | LPIPS ↓ |
+|-------|--------|--------|---------|
+| Bicycle | 25.47 | 0.790 | 0.168 |
+| Bonsai | 32.23 | 0.940 | 0.197 |
+| Counter | 29.36 | 0.911 | 0.187 |
+| Flowers | 21.92 | 0.641 | 0.283 |
+| Garden | 27.46 | 0.869 | 0.099 |
+| Kitchen | 31.47 | 0.928 | 0.121 |
+| Room | 31.96 | 0.923 | 0.207 |
+| Stump | 27.06 | 0.796 | 0.182 |
+| Treehill | 22.26 | 0.646 | 0.270 |
+| **Average** | **27.69** | **0.827** | **0.190** |
+
+![Similarity Comparison](comparison_360_vs_360_similarity_full.png)
+![Similarity Improvements](improvements_360_vs_360_similarity_full.png)
+
 ## Installation
 
 ### Requirements
